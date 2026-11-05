@@ -13,7 +13,7 @@ A responsive, multi-page React portfolio built with Vite. Its shared navigation 
 - `npm run build` creates the production site in `dist/`.
 - `npm run preview` serves the production build locally.
 
-The project pages intentionally describe MealLens and PRIORA as in development. There is no claimed live demo. The contact page uses FormSubmit.co to deliver messages to the supplied email address; first use requires activating the form from a confirmation email. Visitors can also copy the displayed email address and contact Kohila through their preferred webmail service.
+The project pages intentionally describe MealLens and PRIORA as in development. There is no claimed live demo. The contact form opens a prefilled Gmail compose window addressed to the supplied email; visitors review and send the message themselves. Visitors who use another email provider can copy the displayed address into their preferred webmail service. The site does not store or send messages.
 
 ## Deploy to Vercel
 

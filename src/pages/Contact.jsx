@@ -1,9 +1,41 @@
+import { useState } from "react";
 import { Eyebrow, ExternalLink, PageBreadcrumb } from "../components/SiteShell.jsx";
 
 const contactEmail = "kohilaaa4@gmail.com";
+const gmailComposeUrl = new URL("https://mail.google.com/mail/");
+gmailComposeUrl.searchParams.set("view", "cm");
+gmailComposeUrl.searchParams.set("fs", "1");
+gmailComposeUrl.searchParams.set("to", contactEmail);
 
 export default function Contact() {
-  const messageSent = new URLSearchParams(window.location.search).get("sent") === "1";
+  const [formStatus, setFormStatus] = useState("");
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (!form.reportValidity()) return;
+
+    const values = new FormData(form);
+    const subject = `[Portfolio] ${values.get("subject")} — ${values.get("name")}`;
+    const body = [
+      `Name: ${values.get("name")}`,
+      `Email: ${values.get("email")}`,
+      "",
+      String(values.get("message"))
+    ].join("\n");
+    const composeUrl = new URL(gmailComposeUrl);
+    composeUrl.searchParams.set("su", subject);
+    composeUrl.searchParams.set("body", body);
+
+    const composeWindow = window.open(composeUrl.toString(), "_blank");
+    if (composeWindow) {
+      composeWindow.opener = null;
+      setFormStatus("Gmail opened with your message ready. Review it and press Send in Gmail.");
+      return;
+    }
+
+    window.location.assign(composeUrl.toString());
+  }
 
   return (
     <main id="main" className="page-shell inner-page">
@@ -17,7 +49,7 @@ export default function Contact() {
             <span className="aside-icon" aria-hidden="true">@</span>
             <div>
               <p>Email me directly</p>
-              <a href={`mailto:${contactEmail}`}>{contactEmail} <span aria-hidden="true">↗</span></a>
+              <a href={gmailComposeUrl.toString()} target="_blank" rel="noreferrer">{contactEmail} <span aria-hidden="true">↗</span></a>
               <small>If your email app doesn’t open, copy this address into Gmail or your preferred webmail.</small>
             </div>
           </div>
@@ -30,11 +62,8 @@ export default function Contact() {
             </div>
           </div>
         </div>
-        <form className="contact-form" action={`https://formsubmit.co/${contactEmail}`} method="POST">
+        <form className="contact-form" onSubmit={handleSubmit}>
           <p className="eyebrow">SEND A MESSAGE</p>
-          <input type="hidden" name="_subject" value="New message from the portfolio" />
-          <input type="hidden" name="_next" value="https://kohila-priya-portfolio.vercel.app/contact.html?sent=1" />
-          <input type="text" name="_honey" tabIndex="-1" autoComplete="off" hidden />
           <div className="form-field">
             <label htmlFor="contact-name">Your name</label>
             <input id="contact-name" name="name" type="text" autoComplete="name" placeholder="What should I call you?" required />
@@ -58,11 +87,9 @@ export default function Contact() {
             <label htmlFor="contact-message">Your message</label>
             <textarea id="contact-message" name="message" rows="5" placeholder="Tell me a little about it..." required />
           </div>
-          <button className="button button-dark form-submit" type="submit">Send message <span aria-hidden="true">↗</span></button>
+          <button className="button button-dark form-submit" type="submit">Open Gmail to send <span aria-hidden="true">↗</span></button>
           <p className="form-note" role="status">
-            {messageSent
-              ? "Thanks—your message was submitted. First use may require me to activate delivery from a FormSubmit confirmation email."
-              : "Messages are processed by FormSubmit.co and sent to my inbox. First use may require me to activate delivery from a confirmation email."}
+            {formStatus || "This opens a prefilled Gmail message. Review it and press Send in Gmail; this website does not send or store messages."}
           </p>
         </form>
       </section>
