@@ -5,25 +5,39 @@ const contactEmail = "kohilaaa4@gmail.com";
 
 export default function Contact() {
   const [formStatus, setFormStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const form = event.currentTarget;
 
     if (!form.reportValidity()) return;
 
     const values = new FormData(form);
-    const subject = `[Portfolio] ${values.get("subject")} — ${values.get("name")}`;
-    const body = [
-      `Name: ${values.get("name")}`,
-      `Email: ${values.get("email")}`,
-      "",
-      String(values.get("message"))
-    ].join("\n");
-    const mailto = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    values.set("_subject", `[Portfolio] ${values.get("subject")} — ${values.get("name")}`);
+    setIsSubmitting(true);
+    setFormStatus("Sending your message…");
 
-    setFormStatus("Your email app will open with your message ready to send. Nothing is stored on this site.");
-    window.location.href = mailto;
+    try {
+      const response = await fetch(`https://formsubmit.co/ajax/${contactEmail}`, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: values
+      });
+      const result = await response.json();
+
+      if (!response.ok || result.success !== "true") {
+        throw new Error(result.message || "The message service could not accept your message.");
+      }
+
+      form.reset();
+      setFormStatus("Your message was submitted. On first use, I may need to activate delivery from a FormSubmit confirmation email.");
+    } catch (error) {
+      console.error("Contact form submission failed:", error);
+      setFormStatus(`We couldn’t send your message. Please try again or email me directly at ${contactEmail}.`);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -39,7 +53,7 @@ export default function Contact() {
             <div>
               <p>Email me directly</p>
               <a href={`mailto:${contactEmail}`}>{contactEmail} <span aria-hidden="true">↗</span></a>
-              <small>Or use the message form and send from your email app.</small>
+              <small>If your email app doesn’t open, copy this address into Gmail or your preferred webmail.</small>
             </div>
           </div>
           <div className="contact-aside">
@@ -53,6 +67,7 @@ export default function Contact() {
         </div>
         <form className="contact-form" onSubmit={handleSubmit}>
           <p className="eyebrow">SEND A MESSAGE</p>
+          <input type="text" name="_honey" tabIndex="-1" autoComplete="off" hidden />
           <div className="form-field">
             <label htmlFor="contact-name">Your name</label>
             <input id="contact-name" name="name" type="text" autoComplete="name" placeholder="What should I call you?" required />
@@ -76,8 +91,12 @@ export default function Contact() {
             <label htmlFor="contact-message">Your message</label>
             <textarea id="contact-message" name="message" rows="5" placeholder="Tell me a little about it..." required />
           </div>
-          <button className="button button-dark form-submit" type="submit">Open email to send <span aria-hidden="true">↗</span></button>
-          <p className="form-note" role="status">{formStatus || "The form opens your email app with the message filled in; it does not send or store anything by itself."}</p>
+          <button className="button button-dark form-submit" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Sending…" : "Send message"} <span aria-hidden="true">↗</span>
+          </button>
+          <p className="form-note" role="status">
+            {formStatus || "Messages are processed by FormSubmit.co and sent to my inbox. First use may require me to activate delivery from a confirmation email."}
+          </p>
         </form>
       </section>
       <section className="contact-bottom">
